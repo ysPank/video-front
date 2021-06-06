@@ -1,0 +1,17 @@
+import styled from 'styled-components'
+
+import AntTitle from 'antd/lib/typography/Title'
+import AntParagraph from 'antd/lib/typography/Paragraph'
+
+const Title = styled(AntTitle)`
+    margin-top: 0;
+    font-size: clamp(1rem, 10vw, 3.5rem);
+    line-height: 1.2;
+`
+
+const Paragraph = AntParagraph;
+
+export {
+    Title,
+    Paragraph,
+};

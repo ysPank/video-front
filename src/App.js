@@ -1,14 +1,28 @@
-import logo from './logo.svg';
-import './App.css';
+
+import { React, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import SocketServiceSingleton from './api/socket';
+import { Paragraph, Title } from './components/Typogrhaphy';
+import { getUsers } from './redux/users/actions';
+
+
+
 
 function App() {
+  const d = useDispatch();
+
+  useEffect(() => {
+    d(getUsers())
+  }, [])
+
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
         <p>
           Edit <code>src/App.js</code> and save to reload.
         </p>
+        <Title>Hello</Title>
+        <Paragraph>Hello</Paragraph>
         <a
           className="App-link"
           href="https://reactjs.org"
