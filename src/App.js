@@ -1,39 +1,29 @@
 
 import { React, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import SocketServiceSingleton from './api/socket';
-import { Paragraph, Title } from './components/Typogrhaphy';
+import { connect } from 'react-redux';
+
+import CallModal from './components/CallModal';
 import { getUsers } from './redux/users/actions';
+import ClientsList from './views/ClientsList';
 
-
-
-
-function App() {
-  const d = useDispatch();
-
+const App = ({
+  getUsers,
+  modalOpen,
+}) => {
   useEffect(() => {
-    d(getUsers())
+    getUsers();
   }, [])
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <Title>Hello</Title>
-        <Paragraph>Hello</Paragraph>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <main>
+      <ClientsList />
+      {modalOpen && <CallModal />}
+    </main>
   );
 }
 
-export default App;
+const mapStateToProps = ({ calls }) => ({
+  modalOpen: calls.modalOpen,
+})
+
+export default connect(mapStateToProps, { getUsers })(App);

@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter as Router } from "react-router-dom";
+import { BrowserRouter as Router } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
 
 import App from './App';
 import reportWebVitals from './reportWebVitals';
@@ -12,6 +13,7 @@ import './assets/styles/index.scss';
 ReactDOM.render(
   <Provider store={store}>
     <Suspense fallback={<div className="loading" />}>
+      <ToastContainer />
       <Router>
         <App />
       </Router>

@@ -20,6 +20,7 @@ export const getUsersSuccess = payload => {
   return (
     {
       type: GET_USERS_SUCCESS,
+      payload,
     }
   )
 }

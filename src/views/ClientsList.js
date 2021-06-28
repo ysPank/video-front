@@ -1,63 +1,39 @@
-import { List, Spin } from 'antd';
-import React from 'react';
+import React, { useMemo } from 'react';
+import { connect } from 'react-redux';
 import InfiniteScroll from 'react-infinite-scroller';
+import { List, Spin } from 'antd';
 
-const ClientsList = () => {
+import { getUsers } from '../redux/users/actions';
+import UserItem from '../components/UserItem';
 
-    return (
-        <InfiniteScroll
-        initialLoad={false}
-        pageStart={0}
-        loadMore={this.handleInfiniteOnLoad}
-        hasMore={!this.state.loading && this.state.hasMore}
-        useWindow={false}
-      >
-        <List
-          dataSource={this.state.data}
-          renderItem={item => (
-            <List.Item key={item.id}>
-              {item.name}
-            </List.Item>
-          )}
-        >
-          {this.state.loading && this.state.hasMore && (
-            <div className="demo-loading-container">
-              <Spin />
-            </div>
-          )}
-        </List>
-      </InfiniteScroll>
-    )
-}
-
-
-/**
- * Ultimate button component
- * @typedef Knopka
- * @param {boolean} isComposite
- */
-const Knopka = (props) => {
-  const { isComposite, left, top, innerLeft, innerTop, text, innerClassName } = props;
+const ClientsList = ({ me, users, pagination, isLoading, getUsers }) => {
+  const userList = useMemo(() => users.filter(user => user.id !== me?.id), [users]);
 
   return (
-    <React.Fragment>
-      <>
-        <div className={"button " + !isComposite && 'position-absolute'}
-             style={{left: left + 'px', top: top + "px"}}>
-          <span style={{ left: innerLeft + 'px', top: innerTop + 'px' }}
-                className={"position-absolute " + innerClassName ? innerClassName : ''}>
-            {text}
-          </span>
-        </div>
-      </>
-    </React.Fragment>
+    <InfiniteScroll
+      initialLoad={false}
+      pageStart={0}
+      loadMore={getUsers}
+      hasMore={pagination.totalCount < users.length}
+      useWindow={false}
+    >
+      <List
+        dataSource={userList}
+        renderItem={user => <UserItem user={user} key={user.id} />}
+      >
+        {isLoading && (
+          <Spin />
+        )}
+      </List>
+    </InfiniteScroll>
   )
 }
 
-export default Knopka;
+const mapStateToProps = ({ users: { users, pagination, isLoading, me } }) => ({
+  users,
+  pagination,
+  isLoading,
+  me,
+})
 
-const falseStyle = `
-.false {
-  disblay: none;
-}
-`
+export default connect(mapStateToProps, { getUsers })(ClientsList);
