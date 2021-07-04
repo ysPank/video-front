@@ -59,9 +59,6 @@ const OngoingCall = ({
 
   const handleHangup = () => closePeerConnection();
 
-  const cancelInvitation = () => { }
-  const declineInvitation = () => { }
-
   const handleRemoteHangup = () => {
     closePeerConnection();
     /* change redux status, display message */
@@ -88,6 +85,7 @@ const OngoingCall = ({
   }
 
   const setLocalAndSendMessage = (sessionDescription) => {
+    console.log('session descriptions')
     peerConnection.current.setLocalDescription(sessionDescription);
     // sendMessage(sessionDescription, room);
   }
@@ -97,7 +95,7 @@ const OngoingCall = ({
   }
 
   const maybeStart = () => {
-    if (localStream.current /* !==undefined */) {/* should be always true */
+    if (localStream.current) {
       createPeerConnection();
       peerConnection.current.addStream(localStream.current);
       // isStarted = true;
@@ -109,6 +107,11 @@ const OngoingCall = ({
   }
 
   useEffect(() => {
+    createPeerConnection();
+    peerConnection.current.createOffer(setLocalAndSendMessage, () => console.log('err'));
+
+
+
     if (isInitiator) {
       handleLocalStream();
       /* what should be done with notifying callee? */
@@ -129,8 +132,8 @@ const OngoingCall = ({
 
   return (
     <div>
-      <div ref={localVideo}></div>
-      <div ref={remoteVideo}></div>
+      <video ref={localVideo} />
+      <video ref={remoteVideo} />
     </div>
   )
 }
@@ -140,23 +143,4 @@ const mapStateToProps = ({ users, calls }) => ({
   calls,
 })
 export default connect(mapStateToProps, { setModal })(OngoingCall);
-// socket.on('chat', function(message, room) {
-  // if (message === 'got user media') redux should be updated
-//   } else if (message.type === 'offer') {
-//     if (!isInitiator && !isStarted) {
-//       maybeStart();
-//     }
-//     peerConnection.setRemoteDescription(new RTCSessionDescription(message));
-//     doAnswer();
-//   } else if (message.type === 'answer' && isStarted) {
-//     peerConnection.setRemoteDescription(new RTCSessionDescription(message));
-//   } else if (message.type === 'candidate' && isStarted) {
-//     var candidate = new RTCIceCandidate({
-//       sdpMLineIndex: message.label,
-//       candidate: message.candidate
-//     });
-//     peerConnection.addIceCandidate(candidate);
-//   } else if (message === 'bye' && isStarted) {
-//     handleRemoteHangup();
-//   }
-// });
+
