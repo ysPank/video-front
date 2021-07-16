@@ -2,6 +2,7 @@ import styled from 'styled-components'
 
 import AntTitle from 'antd/lib/typography/Title'
 import AntParagraph from 'antd/lib/typography/Paragraph'
+import 'antd/lib/typography/style/css';
 
 const Title = styled(AntTitle)`
     margin-top: 0;

@@ -1,8 +1,10 @@
 @import './reset.scss';
+@import './variables.scss';
 
 body {
   line-height: 1.5;
-  background: #f3f6f8;
+  background: var(--white);
+  color: var(--dark);
 }
 
 main {

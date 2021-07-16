@@ -1,14 +1,13 @@
-import {
-  CALL_MODAL_STATUS, SET_CALL,
-} from '../actions';
+import { CallStatuses } from '../../constants/callStatuses';
+import { CALL_MODAL_STATUS, SET_CALL } from '../actions';
 
 const INIT_STATE = {
-  status: null,
   modalOpen: false,
   call: {
     id: null,
     callerId: null,
     calleeId: null,
+    status: CallStatuses.PENDING,
   },
 };
 

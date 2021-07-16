@@ -1,23 +1,30 @@
 import React from 'react'
+import { connect } from 'react-redux';
 import Button from 'antd/lib/button';
 
 import { CallStatuses } from '../constants/callStatuses'
 import { Title } from './Typogrhaphy'
 import { cancelCall, acceptCall } from '../api/socketHandlers';
-import { setModal } from '../redux/calls/actions';
-import { connect } from 'react-redux';
+import { setCall, setModal } from '../redux/calls/actions';
 
 const messageToDisplay = (isInitiator, { caller, status }) => {
   if (isInitiator && status === CallStatuses.PENDING) {
     return 'Your invitation is pending';
   }
   if (!isInitiator && status === CallStatuses.PENDING) {
-    return `You've been invited to chat by ${caller?.name || 'Anonymus'}`
+    return `You've been invited to chat by ${caller?.name || 'Anonymus'}`;
   }
 
-  return `You've missed your chance, call has been canceled by caller`
+  return 'Call has been finished';
 }
 
+/**
+ * Component to display pending call state
+ * @param {Object} props
+ * @param {boolean} props.isInitiator Has current user initiated the call
+ * @param {CallInstance} props.call Current call
+ * @param {function} setModal Redux action to manage modal state
+ */
 const CallStates = ({
   isInitiator,
   call,
@@ -25,11 +32,9 @@ const CallStates = ({
 }) => {
   const declineCall = () => {
     cancelCall(call.id);
+    setCall(null);
+    setModal(false);
 
-    if (isInitiator) {
-      /* todo setCall status */
-      setModal(false);
-    }
   }
 
   return (

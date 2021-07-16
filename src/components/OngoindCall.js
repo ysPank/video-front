@@ -1,140 +1,183 @@
-import React, { useEffect, useRef } from 'react';
-
-import 'antd/lib/modal/style/css';
+import React, { useEffect, useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { CallStatuses } from '../constants/callStatuses';
-import { setModal } from '../redux/calls/actions';
 
-const config = {};
+import { setCall, setModal } from '../redux/calls/actions';
+import SocketService from '../api/socket';
+import {
+  handleAnswer,
+  handleICECandidateEvent,
+  handleNegotiationNeededEvent,
+  handleNewICECandidateMsg
+} from '../helpers/callUtils';
+import { SocketEvents } from '../constants/socketEvents';
+import { cancelCall, sendRTCAnswer } from '../api/socketHandlers';
+import { handleBlockUnload } from '../helpers/Utils';
+import styled from 'styled-components';
+import { Button } from 'antd';
 
-const OngoingCall = ({
-  setModal,
-}) => {
-  const call = useSelector(state => state.calls);
+const Container = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  background: white;
+`
+
+const Video = styled.video`
+  flex: 0 0 50%;
+  max-width: 50%;
+`
+
+/* should be received from backend */
+const config = {
+  iceServers: [
+    {
+      // url: 'stun:global.stun.twilio.com:3478?transport=udp',
+      urls: 'stun:global.stun.twilio.com:3478?transport=udp'
+    },
+    {
+      // url: 'turn:global.turn.twilio.com:3478?transport=udp',
+      username: '9b26f57fc4a474fcfd1a6254f87ba662cf0d5c746f08349a7fbb31ca06af1d34',
+      urls: 'turn:global.turn.twilio.com:3478?transport=udp',
+      credential: 'KL5hpKaWNCAsHetvrMpUKePhMiFHcxf9FAyWg/8BEyM='
+    },
+    {
+      // url: 'turn:global.turn.twilio.com:3478?transport=tcp',
+      username: '9b26f57fc4a474fcfd1a6254f87ba662cf0d5c746f08349a7fbb31ca06af1d34',
+      urls: 'turn:global.turn.twilio.com:3478?transport=tcp',
+      credential: 'KL5hpKaWNCAsHetvrMpUKePhMiFHcxf9FAyWg/8BEyM='
+    },
+    {
+      // url: 'turn:global.turn.twilio.com:443?transport=tcp',
+      username: '9b26f57fc4a474fcfd1a6254f87ba662cf0d5c746f08349a7fbb31ca06af1d34',
+      urls: 'turn:global.turn.twilio.com:443?transport=tcp',
+      credential: 'KL5hpKaWNCAsHetvrMpUKePhMiFHcxf9FAyWg/8BEyM='
+    }
+  ]
+}
+
+const OngoingCall = ({ setModal, setCall }) => {
+  const call = useSelector(state => state.calls.call);
   const user = useSelector(state => state.users.me);
+
+  const socketRef = useRef(SocketService.socket);
+
+  const opponentId = useRef([call.caller, call.callee].find(({ id }) => id !== user.id).socketId);
 
   const peerConnection = useRef();
   const localStream = useRef();
-  const remoteStream = useRef();
-
   const localVideo = useRef();
   const remoteVideo = useRef();
 
-  const streamConstraints = {
+  const [streamConstraints, setStreamConstraints] = useState({
     audio: true,
     video: true
-  };
-
-  const isInitiator = user.id === call?.callerId;
-
-  const handleAddStream = (newStream, isLocal = true) => {
-    const [stream, video] = isLocal
-      ? [localStream, localVideo]
-      : [remoteStream, remoteVideo];
-
-    stream.current = newStream;
-    video.srcObject = newStream;
-    // notify another user here !!!!!
-
-
-    /* probably redundant */
-    // if (isLocal && isInitiator) {
-    //   maybeStart();
-    // }
-  }
-
-  const handleLocalStream = () => {
-    navigator.mediaDevices
-      .getUserMedia(streamConstraints)
-      .then(handleAddStream)
-      .catch(() => { });
-  }
+  });
 
   const closePeerConnection = () => {
-    peerConnection.current.close();
+    console.log(peerConnection)
+    peerConnection.current?.close()
     peerConnection.current = undefined;
-
-    /* display info message */
   }
 
-  const handleHangup = () => closePeerConnection();
-
-  const handleRemoteHangup = () => {
+  const handleCallCleanup = () => {
     closePeerConnection();
-    /* change redux status, display message */
-  }
-
-  const handleIceCandidate = (event) => {
-    if (event.candidate) {
-      // sendMessage({
-      //   type: 'candidate',
-      //   label: event.candidate.sdpMLineIndex,
-      //   id: event.candidate.sdpMid,
-      //   candidate: event.candidate.candidate
-      // }, room);
+    if(localStream.current) {
+      localStream.current
+      .getTracks()
+      .forEach(track => track.stop());
     }
+
+    // localStream.current = undefined;
+    // localVideo.current = undefined;
+    // remoteVideo.current = undefined;
+    // opponentId.current = undefined;
   }
 
-  function createPeerConnection() {
-    try {
-      peerConnection.current = new RTCPeerConnection(config);
-      peerConnection.current.onicecandidate = handleIceCandidate;
-      peerConnection.current.onaddstream = (_stream) => handleAddStream(_stream, false);
-      peerConnection.current.onremovestream = () => console.log('remove stream');
-    } catch (e) { }
+  const handleTrackEvent = ({ streams }) => {
+    // console.log(remoteVideo.current, '---track evert')
+    /* if(remoteVideo.current) */ remoteVideo.current.srcObject = streams[0];
   }
 
-  const setLocalAndSendMessage = (sessionDescription) => {
-    console.log('session descriptions')
-    peerConnection.current.setLocalDescription(sessionDescription);
-    // sendMessage(sessionDescription, room);
+  function createPeerConnection(opponentSocketId) {
+    const peer = new RTCPeerConnection(config);
+
+    peer.onicecandidate = (e) => handleICECandidateEvent(e, opponentId.current);
+    peer.ontrack = handleTrackEvent;
+    peer.onnegotiationneeded = () => handleNegotiationNeededEvent(opponentSocketId, peer);
+
+    return peer;
   }
 
-  const initiateCall = () => {
-    peerConnection.createOffer(setLocalAndSendMessage, () => console.log('err'));
+  function callUser(opponentSocketId) {
+    peerConnection.current = createPeerConnection(opponentSocketId);
+
+    localStream.current
+      .getTracks()
+      .forEach(track => peerConnection.current.addTrack(track, localStream.current));
   }
 
-  const maybeStart = () => {
-    if (localStream.current) {
-      createPeerConnection();
-      peerConnection.current.addStream(localStream.current);
-      // isStarted = true;
+  function handleRecieveCall(incoming) {
+    peerConnection.current = createPeerConnection();
 
-      if (isInitiator) {
-        initiateCall();
+    peerConnection.current.setRemoteDescription(new RTCSessionDescription(incoming.sdp))
+      .then(() => localStream.current
+        .getTracks()
+        .forEach(track => peerConnection.current.addTrack(track, localStream.current))
+      )
+      .then(() => peerConnection.current.createAnswer())
+      .then(answer => {
+        peerConnection.current.setLocalDescription(answer)
+        return answer;
+      })
+      .then(answer => {
+        sendRTCAnswer({
+        target: incoming.caller,
+        caller: socketRef.current.id,
+        sdp: answer
+      })
+    })
+  }
+
+  const handleHangup = () => {
+    cancelCall(call.id);
+    setCall(null);
+    setModal(null);
+  }
+
+  useEffect(() => {
+    const blockUnloadCleanup = handleBlockUnload();
+
+    navigator.mediaDevices
+      .getUserMedia(streamConstraints)
+      .then(stream => {
+        localVideo.current.srcObject = stream;
+        localStream.current = stream;
+
+
+        if(user.id === call?.callerId) {
+          callUser(call.callee.socketId);
+        }
+
+        socketRef.current.on(SocketEvents.OFFER, handleRecieveCall);
+        socketRef.current.on(SocketEvents.ANSWER, e => handleAnswer(e, peerConnection.current));
+        socketRef.current.on(SocketEvents.ICE_CANDIDATE, e => handleNewICECandidateMsg(e, peerConnection.current));
+      });
+
+      return () => {
+        console.log('cleaned up')
+        blockUnloadCleanup();
+        handleCallCleanup();
+        peerConnection.current = undefined;
+
       }
-    }
-  }
-
-  useEffect(() => {
-    createPeerConnection();
-    peerConnection.current.createOffer(setLocalAndSendMessage, () => console.log('err'));
-
-
-
-    if (isInitiator) {
-      handleLocalStream();
-      /* what should be done with notifying callee? */
-    }
-    window.onbeforeunload = function () { };
-    // probably send beacon
-    // or let socket server on backend handle disconnect
-  }, [])
-
-  useEffect(() => {
-    if (call.status === CallStatuses.APPROVED && !localStream.current) {
-      handleLocalStream();
-    }
-    if (call.status === CallStatuses.MEDIA_READY && !peerConnection.current) {
-      maybeStart();
-    }
-  }, [call])
+  }, []);
 
   return (
-    <div>
-      <video ref={localVideo} />
-      <video ref={remoteVideo} />
-    </div>
+    <Container>
+      <Video ref={localVideo} autoPlay />
+      <Video ref={remoteVideo} autoPlay />
+
+      <Button onClick={handleHangup}>End Call</Button>
+    </Container>
   )
 }
 
@@ -142,5 +185,7 @@ const mapStateToProps = ({ users, calls }) => ({
   users,
   calls,
 })
-export default connect(mapStateToProps, { setModal })(OngoingCall);
+export default connect(mapStateToProps, { setModal, setCall })(OngoingCall);
 
+
+// issue oif reconnect

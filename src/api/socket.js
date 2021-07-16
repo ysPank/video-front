@@ -1,11 +1,14 @@
 import { io } from "socket.io-client";
 import { eventChannel } from 'redux-saga';
 
+import { readUserStorage } from '../helpers/storage';
+
 class SocketService {
   initConnection() {
     this.socket = io(process.env.REACT_APP_SOCKET_URL, {
       path: process.env.REACT_APP_SOCKET_PATH,
       transports: ["websocket"],
+      query: { name: readUserStorage() || undefined }
     })
   }
 
