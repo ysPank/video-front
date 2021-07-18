@@ -1,25 +1,41 @@
-import logo from './logo.svg';
-import './App.css';
+import { React, useEffect } from 'react';
+import { connect } from 'react-redux';
+import { Route, Switch } from 'react-router-dom';
+import Layout from 'antd/lib/layout/layout';
 
-function App() {
+import CallModal from './components/CallModal';
+import { getUsers } from './redux/users/actions';
+import { getTwilioConfig } from './redux/calls/actions';
+import ClientsList from './views/ClientsList';
+import VideoCall from './views/VideoCall';
+import Header from './components/Header';
+
+const App = ({
+  getUsers,
+  modalOpen,
+  getTwilioConfig,
+}) => {
+  useEffect(() => {
+    getTwilioConfig()
+    getUsers();
+  }, [getUsers, getTwilioConfig])
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Layout>
+    <Header />
+    <main>
+        <Switch>
+          <Route exact path="/" component={ClientsList} />
+          <Route exact path="/call" component={VideoCall} />
+        </Switch>
+      {modalOpen && <CallModal />}
+    </main>
+    </Layout>
   );
 }
 
-export default App;
+const mapStateToProps = ({ calls }) => ({
+  modalOpen: calls.modalOpen,
+})
+
+export default connect(mapStateToProps, { getUsers, getTwilioConfig })(App);
