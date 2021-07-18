@@ -1,0 +1,14 @@
+@import './reset.scss';
+@import './variables.scss';
+
+body {
+  line-height: 1.5;
+  background: var(--white);
+  color: var(--dark);
+}
+
+main {
+  padding: 2.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
