@@ -9,22 +9,7 @@ import { setCall, setModal } from '../calls/actions';
 import { CallStatuses } from '../../constants/callStatuses';
 import { toastConfig } from '../../constants/toastConfig';
 import { setToUserStorage } from '../../helpers/storage';
-
-const handleUserSocketEvents = (event, data, users) => {
-  switch (event) {
-    case SocketEvents.USER_JOINED:
-      return [data, ...users];
-    case SocketEvents.USER_LEFT:
-      return immutableSplice(users, users.findIndex(({ id }) => id === data));
-    case SocketEvents.USER_UPDATED:
-      return immutableUpdateByIndex(
-        users,
-        users.findIndex(({ id }) => id === data.id),
-        data,
-      );
-    default: return;
-  }
-}
+import reactHistory from '../../helpers/history';
 
 export function* watchSocketsChannel() {
   const channel = yield call(createUsersChannel);
@@ -32,36 +17,63 @@ export function* watchSocketsChannel() {
   while (true) {
     const { event, data } = yield take(channel);
     const me = yield (select(state => state.users.me));
+    let users;
 
-    if (event === SocketEvents.MY_DATA) {
-      setToUserStorage(data.name);
-      yield put(updateMe(data));
-    } else if (event === SocketEvents.REQUESTED_CALL) {
-      yield put(setCall(data));
-      if (me.id !== data.caller.id) {
-        yield put(setModal(true));
-      }
-    } else if (event === SocketEvents.DECLINED_CALL) {
-      const declinedCall = yield (select(state => state.calls.call));
-      yield put(setCall({ ...declinedCall, status: CallStatuses.CANCELED }));
-      yield put(setModal(false));
+    switch (event) {
+      case SocketEvents.CUSTOM_ERROR:
+        toast.error(data, toastConfig);
+        break;
+      case SocketEvents.MY_DATA:
+        setToUserStorage(data.name);
+        yield put(updateMe(data));
+        break;
+      case SocketEvents.REQUESTED_CALL:
+        yield put(setCall(data));
+        if (me.id !== data.caller.id) {
+          yield put(setModal(true));
+        }
+        break;
+      case SocketEvents.DECLINED_CALL:
+        const declinedCall = yield (select(state => state.calls.call));
+        yield put(setCall({ ...declinedCall, status: CallStatuses.CANCELED }));
+        yield put(setModal(false));
 
-      toast.error('Call has been canceled by other user.', toastConfig);
-    } else if (event === SocketEvents.ACCEPTED_CALL) {
-      const call = yield (select(state => state.calls.call));
-      yield put(setCall({ ...call, status: CallStatuses.APPROVED }));
-    }
+        reactHistory.replace('/')
 
-    if (event === SocketEvents.USER_UPDATED && data.id === me.id) {
-      // yield put(updateMe({ users: updatedList }));
-    } else if ([SocketEvents.USER_JOINED, SocketEvents.USER_LEFT, SocketEvents.USER_UPDATED].includes(event)) {
-      /* update user in call if user updated */
-      const users = yield (select(state => state.users.users));
-      const updatedList = handleUserSocketEvents(event, data, users);
+        toast.error('Call has been canceled by other user.', toastConfig);
+        break;
+      case SocketEvents.ACCEPTED_CALL:
+        const ongoingCall = yield (select(state => state.calls.call));
 
-      if (updatedList) {
-        yield put(getUsersSuccess({ users: updatedList }));
-      }
+        yield put(setCall({ ...ongoingCall, status: CallStatuses.APPROVED }));
+        yield put(setModal(false));
+
+        reactHistory.push('/call')
+        break;
+      case SocketEvents.USER_JOINED:
+        users = yield (select(state => state.users.users));
+        yield put(getUsersSuccess({ users: [data, ...users] }));
+        break;
+      case SocketEvents.USER_UPDATED:
+        if (data.id !== me.id) {
+          users = yield (select(state => state.users.users));
+
+          yield put(getUsersSuccess({
+            users: immutableUpdateByIndex(
+              users,
+              users.findIndex(({ id }) => id === data.id),
+              data,
+            )
+          }));
+          ;
+        }
+        break;
+      case SocketEvents.USER_LEFT:
+        users = yield (select(state => state.users.users));
+        yield put(getUsersSuccess({ users: immutableSplice(users, users.findIndex(({ id }) => id === data)) }));
+        break;
+      default:
+        break;
     }
   }
 }

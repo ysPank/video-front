@@ -1,5 +1,5 @@
 import { CallStatuses } from '../../constants/callStatuses';
-import { CALL_MODAL_STATUS, SET_CALL } from '../actions';
+import { CALL_MODAL_STATUS, GET_TWILLIO_CONFIG, GET_TWILLIO_CONFIG_FAIL, GET_TWILLIO_CONFIG_SUCCESS, SET_CALL } from '../actions';
 
 const INIT_STATE = {
   modalOpen: false,
@@ -9,6 +9,7 @@ const INIT_STATE = {
     calleeId: null,
     status: CallStatuses.PENDING,
   },
+  config: []
 };
 
 export default (state = INIT_STATE, { type, payload }) => {
@@ -17,6 +18,12 @@ export default (state = INIT_STATE, { type, payload }) => {
       return { ...state, modalOpen: payload, };
     case SET_CALL:
       return { ...state, call: payload, };
+    case GET_TWILLIO_CONFIG:
+      return { ...state };
+    case GET_TWILLIO_CONFIG_SUCCESS:
+      return { ...state, config: payload };
+    case GET_TWILLIO_CONFIG_FAIL:
+      return { ...state, config: [] };
     default: return { ...state };
   }
 }

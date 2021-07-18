@@ -5,5 +5,5 @@ export const toastConfig = {
   closeOnClick: true,
   pauseOnHover: false,
   draggable: false,
-  progress: 0,
+  progress: undefined,
 };

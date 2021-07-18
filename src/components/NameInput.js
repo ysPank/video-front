@@ -1,19 +1,40 @@
 import { useEffect, useState } from 'react'
+import { useSelector } from 'react-redux';
+
+import { updateMe } from '../api/socketHandlers';
 import { Paragraph } from './Typogrhaphy'
+import { NAME_MAX_LENGTH } from '../constants/validations'
 
-
-const NameInput = ({ name }) => {
+const NameInput = () => {
+  const user = useSelector(state => state.users.me);
   const [editingName, setEditingName] = useState();
+  const [isEditing, setIsEditing] = useState();
+
+  const handleUpdate = () => setEditingName(newName => {
+    updateMe({ name: newName });
+    setIsEditing(() => false);
+    return newName
+  })
 
   useEffect(() => {
-    setEditingName(name);
-  }, [name])
+    if(user?.name !== editingName) {
+      setEditingName(user.name)
+    }
+
+  }, [user])
 
   return (
     <Paragraph
       editable={{
         onChange: setEditingName,
-        onEnd: console.log,
+        onEnd: handleUpdate,
+        onCancel: () => {
+          setEditingName(() => user.name);
+          setIsEditing(() => false);
+        },
+        onStart: () => setIsEditing(true),
+        editing: isEditing,
+        maxLength: NAME_MAX_LENGTH,
       }}
     >
       {editingName}

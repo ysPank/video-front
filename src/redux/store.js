@@ -11,27 +11,27 @@ const middlewares = [sagaMiddleware];
 export function configureStore(initialState) {
   let enhancedCompose = compose;
 
-  if (window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__) {
+  if (window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ && process.env.NODE_ENV !== 'production') {
     enhancedCompose = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({});
   }
 
 
-    const store = createStore(
-        reducers,
-        initialState,
-        enhancedCompose(applyMiddleware(...middlewares))
-    );
+  const store = createStore(
+    reducers,
+    initialState,
+    enhancedCompose(applyMiddleware(...middlewares))
+  );
 
-    sagaMiddleware.run(sagas);
+  sagaMiddleware.run(sagas);
 
-    if (module.hot) {
-        module.hot.accept('./reducers', () => {
-            const nextRootReducer = require('./reducers');
-            store.replaceReducer(nextRootReducer);
-        });
-    }
+  if (module.hot) {
+    module.hot.accept('./reducers', () => {
+      const nextRootReducer = require('./reducers');
+      store.replaceReducer(nextRootReducer);
+    });
+  }
 
-    return store;
+  return store;
 }
 
 export default configureStore();

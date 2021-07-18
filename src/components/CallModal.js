@@ -1,19 +1,39 @@
 import React from 'react';
-import { connect, useSelector } from 'react-redux';
-import { Modal } from 'antd';
+import { connect } from 'react-redux';
+import { Button, Modal } from 'antd';
 
 import { CallStatuses } from '../constants/callStatuses';
-import { setModal } from '../redux/calls/actions';
-import OngoindCall from './OngoindCall';
-import CallStates from './CallStates';
+import { setModal, setCall } from '../redux/calls/actions';
+import { Title } from './Typogrhaphy'
+import { cancelCall, acceptCall } from '../api/socketHandlers';
 
 import 'antd/lib/modal/style/css';
 
-const CallModal = () => {
-  const call = useSelector(state => state.calls.call);
-  const user = useSelector(state => state.users.me);
+const messageToDisplay = (isInitiator, { caller, status }) => {
+  if (isInitiator && status === CallStatuses.PENDING) {
+    return 'Your invitation is pending';
+  }
+  if (!isInitiator && status === CallStatuses.PENDING) {
+    return `You've been invited to chat by ${caller?.name || 'Anonymus'}`;
+  }
 
+  return 'Call has been finished';
+}
+
+const CallModal = ({
+  user,
+  call,
+  setCall,
+  setModal
+}) => {
   const isInitiator = user.id === call?.caller?.id;
+
+  const declineCall = () => {
+    cancelCall(call.id);
+    setCall(null);
+    setModal(false);
+
+  }
 
   if(!call?.id || !call?.status) return null;
 
@@ -25,17 +45,22 @@ const CallModal = () => {
       maskClosable={false}
       destroyOnClose={true}
     >
-      {[CallStatuses.PENDING, CallStatuses.FINISHED].includes(call.status)
-        ? <CallStates isInitiator={isInitiator} call={call} />
-        : <OngoindCall call={call} />
-      }
+      <Title>
+        {messageToDisplay(isInitiator, call)}
+      </Title>
+      {call.status === CallStatuses.PENDING && (
+        <>
+          {!isInitiator && <Button onClick={() => acceptCall(call.id)}>Accept</Button>}
+          <Button onClick={declineCall}>Cancel</Button>
+        </>
+      )}
     </Modal>
   )
 }
 
-const mapStateToProps = ({ users, calls }) => ({
-  users,
-  calls,
+const mapStateToProps = ({ users: { me: user }, calls: { call } }) => ({
+  user,
+  call,
 });
 
-export default connect(mapStateToProps, { setModal })(CallModal);
+export default connect(mapStateToProps, { setModal, setCall })(CallModal);

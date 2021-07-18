@@ -1,3 +1,6 @@
+/**
+ * @enum
+ */
 export const UserStatuses = {
   AVAILABLE: 1,
   PENDING: 2,

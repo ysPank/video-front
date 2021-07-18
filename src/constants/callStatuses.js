@@ -1,3 +1,6 @@
+/**
+ * @enum
+ */
 export const CallStatuses = {
   PENDING: 1,
   APPROVED: 2,

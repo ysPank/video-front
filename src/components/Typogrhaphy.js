@@ -10,9 +10,11 @@ const Title = styled(AntTitle)`
     line-height: 1.2;
 `
 
-const Paragraph = AntParagraph;
+const Paragraph = styled(AntParagraph)`
+    margin-bottom: 0 !important;
+`;
 
 export {
-    Title,
-    Paragraph,
+  Title,
+  Paragraph,
 };

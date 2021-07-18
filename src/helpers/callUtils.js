@@ -1,5 +1,6 @@
 import SocketService from '../api/socket';
 import { sendIceCandidate, sendRTCOffer } from '../api/socketHandlers'
+import { Resolutions } from '../constants/resolutionOptions';
 import { logRTC } from './Logger';
 
 /**
@@ -7,6 +8,7 @@ import { logRTC } from './Logger';
  * to try and establish connection
  * @param {any} event.candidate Candidate object
  * @param {string} opponentId Socket id of opponent
+ * @returns {void}
  */
 export function handleICECandidateEvent({ candidate } = {}, opponentId) {
   if (candidate) {
@@ -20,13 +22,13 @@ export function handleICECandidateEvent({ candidate } = {}, opponentId) {
 /**
  * Handle Ice candidate event incoming from socket
  * @param {any} event Socket event payload
- * @param {any} peerConnection Peer connection stored in ref
+ * @param {{current: RTCPeerConnection}} peerConnection Ref to Peer connection
  */
 export function handleNewICECandidateMsg(event, peerConnection) {
   try {
     const candidate = new RTCIceCandidate(event);
 
-    peerConnection
+    peerConnection.current
       .addIceCandidate(candidate)
       .catch(logRTC);
   } catch {
@@ -38,9 +40,10 @@ export function handleNewICECandidateMsg(event, peerConnection) {
 /**
  * Start handshacke procedure by creating an offer
  * @param {string} opponentSocketId
- * @param {any} peerConnection Peer connection stored in ref
+ * @param {RTCPeerConnection} peerConnection Peer connection stored in ref
+ * @returns {void}
  */
-export function handleNegotiationNeededEvent(opponentSocketId, peerConnection) {
+export const handleNegotiationNeededEvent = (opponentSocketId, peerConnection) => {
   peerConnection
     .createOffer()
     .then(offer => peerConnection.setLocalDescription(offer))
@@ -56,11 +59,21 @@ export function handleNegotiationNeededEvent(opponentSocketId, peerConnection) {
  * Handle answer socket event
  * @param {object} event
  * @param {object} event.sdp Session descriptor sent by socket
- * @param {any} peerConnection Peer connection stored in ref
+ * @param {{current: RTCPeerConnection}} peerConnection Ref to Peer connection
  * @returns {void}
  */
-export function handleAnswer(event, peerConnection) {
-  peerConnection
+export const handleAnswer = (event, peerConnection) => {
+  peerConnection.current
     .setRemoteDescription(new RTCSessionDescription(event.sdp))
     .catch(logRTC);
+}
+
+
+export const getVideoOptions = () => {
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+
+  if(connection?.saveData || connection?.effectiveType?.includes('2g')) return Resolutions.minecraft;
+  if(connection?.effectiveType === '3g') return Resolutions.normal;
+
+  return Resolutions.unlimited;
 }
