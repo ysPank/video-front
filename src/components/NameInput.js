@@ -21,6 +21,7 @@ const NameInput = () => {
       setEditingName(user.name)
     }
 
+    // eslint-disable-next-line
   }, [user])
 
   return (
