@@ -204,6 +204,7 @@ const OngoingCall = ({ call, user, setCall, config, history }) => {
 
       socketListeners.forEach((listener, i) => SocketService.socket.off(events[i], listener))
     }
+    // eslint-disable-next-line
   }, []);
 
   return (

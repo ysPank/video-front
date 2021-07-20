@@ -7,6 +7,7 @@ import { getUsers } from '../redux/users/actions';
 import UserItem from '../components/UserItem';
 
 const ClientsList = ({ me, users, pagination, isLoading, getUsers }) => {
+  // eslint-disable-next-line
   const userList = useMemo(() => users.filter(user => user.id !== me?.id), [users]);
 
   return (
