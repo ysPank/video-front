@@ -1,23 +1,23 @@
 {
   "files": {
     "main.css": "/video-front/static/css/main.c30b3561.chunk.css",
-    "main.js": "/video-front/static/js/main.c11d2c0e.chunk.js",
-    "main.js.map": "/video-front/static/js/main.c11d2c0e.chunk.js.map",
+    "main.js": "/video-front/static/js/main.6c003927.chunk.js",
+    "main.js.map": "/video-front/static/js/main.6c003927.chunk.js.map",
     "runtime-main.js": "/video-front/static/js/runtime-main.875d0cb2.js",
     "runtime-main.js.map": "/video-front/static/js/runtime-main.875d0cb2.js.map",
     "static/css/2.5530898f.chunk.css": "/video-front/static/css/2.5530898f.chunk.css",
-    "static/js/2.c0f794b0.chunk.js": "/video-front/static/js/2.c0f794b0.chunk.js",
-    "static/js/2.c0f794b0.chunk.js.map": "/video-front/static/js/2.c0f794b0.chunk.js.map",
+    "static/js/2.9ad89428.chunk.js": "/video-front/static/js/2.9ad89428.chunk.js",
+    "static/js/2.9ad89428.chunk.js.map": "/video-front/static/js/2.9ad89428.chunk.js.map",
     "index.html": "/video-front/index.html",
     "static/css/2.5530898f.chunk.css.map": "/video-front/static/css/2.5530898f.chunk.css.map",
     "static/css/main.c30b3561.chunk.css.map": "/video-front/static/css/main.c30b3561.chunk.css.map",
-    "static/js/2.c0f794b0.chunk.js.LICENSE.txt": "/video-front/static/js/2.c0f794b0.chunk.js.LICENSE.txt"
+    "static/js/2.9ad89428.chunk.js.LICENSE.txt": "/video-front/static/js/2.9ad89428.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.875d0cb2.js",
     "static/css/2.5530898f.chunk.css",
-    "static/js/2.c0f794b0.chunk.js",
+    "static/js/2.9ad89428.chunk.js",
     "static/css/main.c30b3561.chunk.css",
-    "static/js/main.c11d2c0e.chunk.js"
+    "static/js/main.6c003927.chunk.js"
   ]
 }
