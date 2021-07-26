@@ -21,8 +21,9 @@ jobs:
         envkey_DEBUG: false
         envkey_REACT_APP_BASE_URL: ${{ secrets.REACT_APP_BASE_URL }}
         envkey_REACT_APP_SOCKET_URL: ${{ secrets.REACT_APP_SOCKET_URL }}
-        envkeyREACT_APP_SOCKET_PATH: ${{ secrets.REACT_APP_SOCKET_PATH }}
+        envkey_REACT_APP_SOCKET_PATH: ${{ secrets.REACT_APP_SOCKET_PATH }}
         envkey_REACT_APP_VIOLATION_API:  ${{ secrets.REACT_APP_VIOLATION_API }}
+        envkey_REACT_APP_API_VERSION:  ${{ secrets.REACT_APP_API_VERSION }}
         file_name: .env
 
     - name: Build
