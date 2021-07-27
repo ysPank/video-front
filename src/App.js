@@ -22,14 +22,14 @@ const App = ({
 
   return (
     <Layout>
-    <Header />
-    <main>
+      <Header />
+      <main>
         <Switch>
           <Route exact path="/" component={ClientsList} />
           <Route exact path="/call" component={VideoCall} />
         </Switch>
-      {modalOpen && <CallModal />}
-    </main>
+        {modalOpen && <CallModal />}
+      </main>
     </Layout>
   );
 }

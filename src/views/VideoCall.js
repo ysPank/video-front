@@ -36,8 +36,8 @@ const Video = styled.video`
   width: ${props => props.isMinified ? '250px' : '100%'};
   object-fit: cover;
   height: ${props => props.isMinified
-      ? '100px'
-      : '100%'
+    ? '100px'
+    : '100%'
   };
   ${props => props.isMinified ? absoluteStyles : ''}
   filter: ${props => props.status !== VideoStatuses.safe ? 'blur(30px)' : 'none'};
@@ -45,6 +45,7 @@ const Video = styled.video`
 
 const OngoingCall = ({ call, user, setCall, config, history }) => {
   const socketRef = useRef(SocketService.socket);
+  const mediaPermission = useRef();
 
   const opponentId = useRef([call?.caller, call?.callee].find(({ id } = {}) => id !== user?.id)?.socketId);
 
@@ -64,7 +65,6 @@ const OngoingCall = ({ call, user, setCall, config, history }) => {
   });
 
   const closePeerConnection = () => {
-    console.log(peerConnection)
     peerConnection.current?.close()
     peerConnection.current = undefined;
   }
@@ -89,7 +89,7 @@ const OngoingCall = ({ call, user, setCall, config, history }) => {
 
         toast.warning(
           <ViolationToast acceptVideo={() => setVideoStatus(VideoStatuses.safe)} />,
-          {...toastConfig, autoClose: false }
+          { ...toastConfig, autoClose: false }
         );
       })
   }
@@ -115,23 +115,25 @@ const OngoingCall = ({ call, user, setCall, config, history }) => {
   async function handleRecieveCall(incoming) {
     peerConnection.current = createPeerConnection();
 
-    peerConnection.current.setRemoteDescription(new RTCSessionDescription(incoming.sdp))
-      .then(() => localStream.current
-        .getTracks()
-        .forEach(track => peerConnection.current.addTrack(track, localStream.current))
-      )
-      .then(() => peerConnection.current.createAnswer())
-      .then(answer => {
-        peerConnection.current.setLocalDescription(answer)
-        return answer;
-      })
-      .then(answer => {
-        sendRTCAnswer({
-          target: incoming.caller,
-          caller: socketRef.current.id,
-          sdp: answer
+    mediaPermission.current.then(() => {
+      peerConnection.current.setRemoteDescription(new RTCSessionDescription(incoming.sdp))
+        .then(() => localStream.current
+          .getTracks()
+          .forEach(track => peerConnection.current.addTrack(track, localStream.current))
+        )
+        .then(() => peerConnection.current.createAnswer())
+        .then(answer => {
+          peerConnection.current.setLocalDescription(answer)
+          return answer;
         })
-      })
+        .then(answer => {
+          sendRTCAnswer({
+            target: incoming.caller,
+            caller: socketRef.current.id,
+            sdp: answer
+          })
+        })
+    })
   }
 
   const handleHangup = () => {
@@ -175,32 +177,35 @@ const OngoingCall = ({ call, user, setCall, config, history }) => {
       SocketEvents.ICE_CANDIDATE,
     ]
 
-    navigator.mediaDevices
+    mediaPermission.current = navigator.mediaDevices
       .getUserMedia(streamConstraints)
       .then(stream => {
         localVideo.current.srcObject = stream;
         localStream.current = stream;
 
+        mediaPermission.current = new Promise(resolve => resolve())
+
 
         if (user.id === call?.callerId) {
           callUser(call.callee.socketId);
         }
-
-        socketListeners.push(
-          handleRecieveCall,
-          e => handleAnswer(e, peerConnection),
-          e => handleNewICECandidateMsg(e, peerConnection)
-        )
-
-        socketRef.current.once(SocketEvents.OFFER, socketListeners[0]);
-        socketRef.current.once(SocketEvents.ANSWER, socketListeners[1]);
-        socketRef.current.on(SocketEvents.ICE_CANDIDATE, socketListeners[2]);
       });
+
+    socketListeners.push(
+      handleRecieveCall,
+      e => handleAnswer(e, peerConnection),
+      e => handleNewICECandidateMsg(e, peerConnection)
+    )
+
+    socketRef.current.once(SocketEvents.OFFER, socketListeners[0]);
+    socketRef.current.once(SocketEvents.ANSWER, socketListeners[1]);
+    socketRef.current.on(SocketEvents.ICE_CANDIDATE, socketListeners[2]);
 
     return () => {
       blockUnloadCleanup();
       handleCallCleanup();
       peerConnection.current = undefined;
+      mediaPermission.current = undefined;
 
       socketListeners.forEach((listener, i) => SocketService.socket.off(events[i], listener))
     }

@@ -1,6 +1,6 @@
 /**
  * Handle warning before closing window,
- * defauld message will be displayed
+ * default message will be displayed
  * @returns {Function} Cleanup function
  */
 export const handleBlockUnload = () => {
@@ -13,8 +13,6 @@ export const getPreviewFromVideo = (video) => {
   return new Promise(resolve => {
     const canvas = document.createElement('canvas');
     video.onloadeddata = () => {
-      console.log(video.videoWidth)
-
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
